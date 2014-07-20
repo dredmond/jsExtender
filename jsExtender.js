@@ -1,3 +1,18 @@
+﻿/*
+﻿ * jsExtender.js
+﻿ * A simple JavaScript Inheritance / Extension Library.
+﻿ *
+﻿ * jsExtender is an Open Source project avaiable under
+﻿ * The Code Project Open License (CPOL).
+﻿ * http://www.codeproject.com/info/cpol10.aspx
+﻿ *
+﻿ * Author: Donny Redmond
+﻿ * Created: 07/18/2014
+﻿ * Project Url: https://github.com/dredmond/jsExtender
+﻿ *
+﻿ * Last Modified: 07/20/2014
+﻿ *
+﻿ */
 ﻿var jsExtender = jsExtender || (function () {
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
 		getOwnPropertyNames = Object.getOwnPropertyNames,
