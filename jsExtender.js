@@ -86,10 +86,23 @@
 				copyProperties(extendProto.prototype, currentExtender);
 
 				addExtend(extendProto);
-
+				
 				return extendProto;
 			};
+			
+			addCreate(destination);
 		}
+		
+		/*
+		 * Allow creation of object without the use of the new keyword.
+		 */
+		function addCreate(destConstruct) {
+            destConstruct.create = function() {
+				var constructProto = createProto(destConstruct.prototype);
+				constructProto = (destConstruct.apply(constructProto, arguments) || constructProto);
+                return constructProto;
+            };
+        }
 
 		function createConstructor(source, destination) {
 			function defaultConstructor() { }

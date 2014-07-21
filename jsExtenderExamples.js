@@ -59,8 +59,8 @@ jsExtExamples.writeOutput(jsExtExamples, 4);
 jsExtExamples.writeOutput();
 
 // Default jsExtender
-var defaultClass = jsExtender(),
-	defaultInstance = new defaultClass();
+var defaultClass = jsExtender();
+var defaultInstance = defaultClass.create();
 
 jsExtExamples.writeOutput('defaultClass Properties:');
 jsExtExamples.writeOutput(jsExtender.keys(defaultClass), 4);
@@ -101,7 +101,7 @@ defaultClass.prototype.testFunc = function () {
 };
 
 // Create a defaultClass object.
-var defaultInstance = new defaultClass();
+var defaultInstance = defaultClass.create();
 defaultInstance.testFunc();
 
 // Extend the default class and override the constructor.
@@ -113,7 +113,7 @@ var defaultClassExtended = defaultClass.extend({
 });
 
 // Create a new instance of the extended default class.
-defaultInstanceExtended = new defaultClassExtended();
+defaultInstanceExtended = defaultClassExtended.create();
 
 // The testFunc declared on defaultClass should still work in defaultClassExtended.
 defaultInstanceExtended.testFunc();
@@ -132,11 +132,16 @@ ExtensionConstructor.prototype.myPrototypedFunction = function (x, y) {
 // Make ExtensionConstructor inherit from the default class.
 var extensionFunctionClass = defaultClass.extend(ExtensionConstructor);
 
+ExtensionConstructor.prototype.afterDeclare = function () {
+	console.log('Calling After Declare.');
+};
+
 // Create a new instance of the extended default class.
-var extensionFunctionInstance = new extensionFunctionClass();
+var extensionFunctionInstance = extensionFunctionClass.create();
 
 // The function declared on the ExtensionConstructor should still work.
 extensionFunctionInstance.myPrototypedFunction(20, 50);
+extensionFunctionInstance.afterDeclare();
 
 // The testFunc declared on defaultClass should still work in extensionFunctionInstance.
 extensionFunctionInstance.testFunc();
@@ -161,7 +166,7 @@ var baseTestClass = extensionFunctionClass.extend({
 
 // Make an instace of the baseTestClass. It should call 
 // it's own constructor and the constructor of it's parent.
-var baseTestInstance = new baseTestClass();
+var baseTestInstance = baseTestClass.create();
 
 // Make sure all other calls still work as expected. 
 // They should also call the base functions.
@@ -191,7 +196,7 @@ var baseTestClass2 = baseTestClass.extend({
 
 // Make an instace of the baseTestClass2. It should call 
 // it's own constructor and the constructor of it's parent.
-var baseTestInstance2 = new baseTestClass2();
+var baseTestInstance2 = baseTestClass2.create();
 
 // Make sure all other calls still work as expected. 
 // They should also call the base functions.
