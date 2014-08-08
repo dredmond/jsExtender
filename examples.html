@@ -25,6 +25,43 @@
 	<body>
 		<div class="outputHeader">jsExtenderExamples Output:</div>
 		<div id="output"></div>
-		<script type="text/javascript" src="jsExtenderExamples.js"></script>
+	    <script type="text/javascript" src="jsExtenderExamples.js"></script>
+	    <script type="text/javascript">
+            function protoClass(t) {
+                console.log(t);
+            }
+
+            protoClass.prototype.test = function() {
+                console.log('testing');
+            };
+
+            var extended = jsExtender(protoClass);
+
+            var protoClassDefault = jsExtender();
+            var extended2 = protoClassDefault.extend(protoClass);
+
+            protoClass.prototype.test2 = function () {
+                console.log('testing2');
+            }
+
+            var extended2Inst = extended2.create();
+            var extendedInst = extended.create(2);
+
+            protoClass.prototype.test3 = function () {
+                console.log('testing3');
+            }
+
+            extendedInst.test();
+
+            // This works!
+            extendedInst.test2();
+            extendedInst.test3();
+
+            // Does not work...
+            extended2Inst.test();
+            extended2Inst.test2();
+            extended2Inst.test3();
+
+    	</script>
 	</body>
 </html>
