@@ -40,14 +40,14 @@
             var protoClassDefault = jsExtender();
             var extended2 = protoClassDefault.extend(protoClass);
 
-            protoClass.prototype.test2 = function () {
+            extended.prototype.test2 = function () {
                 console.log('testing2');
             }
 
-            var extended2Inst = extended2.create();
+            var extended2Inst = extended2.create(1);
             var extendedInst = extended.create(2);
 
-            protoClass.prototype.test3 = function () {
+            extended.prototype.test3 = function () {
                 console.log('testing3');
             }
 
@@ -61,6 +61,18 @@
             extended2Inst.test();
             extended2Inst.test2();
             extended2Inst.test3();
+
+            function c1() {
+                
+            }
+
+            c1.prototype.t = 5;
+
+            function c2() { }
+
+            c2.prototype.t2 = 10;
+
+
 
     	</script>
 	</body>
