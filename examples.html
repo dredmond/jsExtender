@@ -31,24 +31,32 @@
                 console.log(t);
             }
 
+            function protoClass2(x) {
+                console.log(x);
+            }
+
+
+
             protoClass.prototype.test = function() {
                 console.log('testing');
             };
 
             var extended = jsExtender(protoClass);
+            var extended2 = extended.extend(protoClass2);
 
-            var protoClassDefault = jsExtender();
-            var extended2 = protoClassDefault.extend(protoClass);
-
-            extended.prototype.test2 = function () {
+            protoClass.prototype.test2 = function () {
                 console.log('testing2');
             }
 
             var extended2Inst = extended2.create(1);
             var extendedInst = extended.create(2);
 
-            extended.prototype.test3 = function () {
+            protoClass.prototype.test3 = function () {
                 console.log('testing3');
+            }
+
+            protoClass2.prototype.test4 = function () {
+                console.log('testing4');
             }
 
             extendedInst.test();
@@ -61,6 +69,7 @@
             extended2Inst.test();
             extended2Inst.test2();
             extended2Inst.test3();
+            extended2Inst.test4();
 
             function c1() {
                 
