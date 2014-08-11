@@ -132,7 +132,14 @@ ExtensionConstructor.prototype.myPrototypedFunction = function (x, y) {
 // Make ExtensionConstructor inherit from the default class.
 var extensionFunctionClass = defaultClass.extend(ExtensionConstructor);
 
-ExtensionConstructor.prototype.afterDeclare = function () {
+/* Note:
+ *
+ * This can be extensionFunctionClass.prototype.afterDeclare or defaultClass.prototype.afterDeclare.
+ * It cannot be ExtensionConstructor.prototype.afterDeclare because the properties are copied during the extend 
+ * call and not inherited.
+ *
+ */
+extensionFunctionClass.prototype.afterDeclare = function () {
 	console.log('Calling After Declare.');
 };
 
@@ -173,6 +180,7 @@ var baseTestInstance = baseTestClass.create();
 baseTestInstance.testFunc();
 baseTestInstance.testFunc2();
 baseTestInstance.myPrototypedFunction(10, 20, 30);
+baseTestInstance.afterDeclare();
 
 // Multiple Inheritance with base calls.
 var baseTestClass2 = baseTestClass.extend({
@@ -191,6 +199,10 @@ var baseTestClass2 = baseTestClass.extend({
     myPrototypedFunction: function(x, y, z) {
         console.log('myPrototypedFunction has been called from baseTestClass2.');
         this.base.call(this, x, y, z);
+    },
+    afterDeclare: function() {
+        console.log('After declare overridden in baseTestClass2.');
+        this.base.call(this);
     }
 });
 
@@ -203,3 +215,4 @@ var baseTestInstance2 = baseTestClass2.create();
 baseTestInstance2.testFunc();
 baseTestInstance2.testFunc2();
 baseTestInstance2.myPrototypedFunction(10, 10, 10);
+baseTestInstance2.afterDeclare();
