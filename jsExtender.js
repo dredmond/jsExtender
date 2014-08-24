@@ -10,7 +10,7 @@
 ﻿ * Created: 07/18/2014
 ﻿ * Project Url: https://github.com/dredmond/jsExtender
 ﻿ *
-﻿ * Last Modified: 07/20/2014
+﻿ * Last Modified: 08/24/2014
 ﻿ *
 ﻿ */
 ﻿var jsExtender = jsExtender || (function () {
@@ -18,7 +18,7 @@
 		getOwnPropertyNames = Object.getOwnPropertyNames,
 		keys = Object.keys;
 		
-	var _jsExtender = function (classExtension) {
+	var jsExt = function (classExtension) {
 		// Takes object or prototype and makes a new constructor function
 		// that inherits it.
 		function createProto(e) {
@@ -27,12 +27,8 @@
 			return new func();
 		}
 
-		function isObjectConstructor(func) {
-			return (Object.prototype.constructor === func);
-		}
-
 		function getPrototypeObject(extender) {
-			return (typeof (extender) === 'object') ? extender : extender.prototype;
+			return (jsExt.isObject(extender)) ? extender : extender.prototype;
 		}
 
 		// Copys all properties from source to the destination if they don't already
@@ -44,7 +40,7 @@
 			for (var i = 0; i < propNames.length; i++) {
 				var p = propNames[i];
 
-				if (typeof (destination[p]) === 'function' && typeof (source[p]) === 'function') {
+				if (jsExt.isFunction(destination[p]) && jsExt.isFunction(source[p])) {
 					destination[p] = wrapFunction(destination[p], source[p]);
 				} else {
 					destination[p] = source[p];
@@ -107,14 +103,14 @@
 		function createConstructor(source, destination) {
 			function defaultConstructor() { }
 
-			if (!source || typeof (source.constructor) !== 'function') {
+			if (jsExt.isUndefinedOrNull(source) || !jsExt.isFunction(source.constructor)) {
 				return defaultConstructor;
 			}
 
 			var proto = source.constructor,
-				invalidConstructor = isObjectConstructor(proto);
+				invalidConstructor = jsExt.isObjectConstructor(proto);
 
-			if (!destination || typeof (destination.prototype.constructor) !== 'function') {
+			if (jsExt.isUndefinedOrNull(destination) || !jsExt.isFunction(destination.prototype.constructor)) {
 				return (!invalidConstructor) ? proto : defaultConstructor;
 			}
 
@@ -138,10 +134,30 @@
 		return classConstruct;
 	};
 
-	_jsExtender.hasOwnProperty = hasOwnProperty;
-	_jsExtender.getOwnPropertyNames = getOwnPropertyNames;
-	_jsExtender.keys = keys;
-	
-	return _jsExtender;
+	jsExt.hasOwnProperty = hasOwnProperty;
+	jsExt.getOwnPropertyNames = getOwnPropertyNames;
+	jsExt.keys = keys;
+
+﻿    jsExt.isObjectConstructor = function(func) {
+﻿        return (Object.prototype.constructor === func);
+﻿    };
+
+﻿    jsExt.isUndefined = function(prop) {
+﻿        return typeof (prop) === 'undefined';
+﻿    };
+
+﻿    jsExt.isUndefinedOrNull = function(prop) {
+﻿        return jsExt.isUndefined(prop) || prop == null;
+﻿    };
+
+﻿    jsExt.isObject = function(obj) {
+﻿        return typeof (obj) === 'object';
+﻿    };
+
+﻿    jsExt.isFunction = function(obj) {
+﻿        return typeof (obj) === 'function';
+﻿    };
+
+    return jsExt;
 })();
  
