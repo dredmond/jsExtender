@@ -1,23 +1,43 @@
 ﻿/*
-﻿ * jsExtender.js
-﻿ * A simple JavaScript Inheritance / Extension Library.
-﻿ *
-﻿ * jsExtender is an Open Source project avaiable under
-﻿ * The Code Project Open License (CPOL).
-﻿ * http://www.codeproject.com/info/cpol10.aspx
-﻿ *
-﻿ * Author: Donny Redmond
-﻿ * Created: 07/18/2014
-﻿ * Project Url: https://github.com/dredmond/jsExtender
-﻿ *
-﻿ * Last Modified: 08/24/2014
-﻿ *
-﻿ */
-﻿var jsExtender = jsExtender || (function () {
+ * jsExtender.js
+ * A simple JavaScript Inheritance / Extension Library.
+ *
+ * jsExtender is an Open Source project avaiable under
+ * The Code Project Open License (CPOL).
+ * http://www.codeproject.com/info/cpol10.aspx
+ *
+ * Author: Donny Redmond
+ * Created: 07/18/2014
+ * Project Url: https://github.com/dredmond/jsExtender
+ *
+ * Last Modified: 08/24/2014
+ *
+ */
+var jsExtender = jsExtender || (function () {
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
 		getOwnPropertyNames = Object.getOwnPropertyNames,
 		keys = Object.keys;
 		
+	function isObjectConstructor(func) {
+	    return Object.prototype.constructor === func;
+	}
+
+	function isUndefined(prop) {
+	    return typeof (prop) === 'undefined';
+	}
+
+	function isUndefinedOrNull(prop) {
+	    return isUndefined(prop) || prop == null;
+	}
+
+	function isObject(obj) {
+	    return typeof (obj) === 'object';
+	}
+
+	function isFunction(obj) {
+	    return typeof (obj) === 'function';
+	}
+
 	var jsExt = function (classExtension) {
 		// Takes object or prototype and makes a new constructor function
 		// that inherits it.
@@ -28,7 +48,7 @@
 		}
 
 		function getPrototypeObject(extender) {
-			return (jsExt.isObject(extender)) ? extender : extender.prototype;
+			return (isObject(extender)) ? extender : extender.prototype;
 		}
 
 		// Copys all properties from source to the destination if they don't already
@@ -40,7 +60,7 @@
 			for (var i = 0; i < propNames.length; i++) {
 				var p = propNames[i];
 
-				if (jsExt.isFunction(destination[p]) && jsExt.isFunction(source[p])) {
+				if (isFunction(destination[p]) && isFunction(source[p])) {
 					destination[p] = wrapFunction(destination[p], source[p]);
 				} else {
 					destination[p] = source[p];
@@ -103,14 +123,14 @@
 		function createConstructor(source, destination) {
 			function defaultConstructor() { }
 
-			if (jsExt.isUndefinedOrNull(source) || !jsExt.isFunction(source.constructor)) {
+			if (isUndefinedOrNull(source) || !isFunction(source.constructor)) {
 				return defaultConstructor;
 			}
 
 			var proto = source.constructor,
-				invalidConstructor = jsExt.isObjectConstructor(proto);
+				invalidConstructor = isObjectConstructor(proto);
 
-			if (jsExt.isUndefinedOrNull(destination) || !jsExt.isFunction(destination.prototype.constructor)) {
+			if (isUndefinedOrNull(destination) || !isFunction(destination.prototype.constructor)) {
 				return (!invalidConstructor) ? proto : defaultConstructor;
 			}
 
@@ -137,26 +157,11 @@
 	jsExt.hasOwnProperty = hasOwnProperty;
 	jsExt.getOwnPropertyNames = getOwnPropertyNames;
 	jsExt.keys = keys;
-
-﻿    jsExt.isObjectConstructor = function(func) {
-﻿        return (Object.prototype.constructor === func);
-﻿    };
-
-﻿    jsExt.isUndefined = function(prop) {
-﻿        return typeof (prop) === 'undefined';
-﻿    };
-
-﻿    jsExt.isUndefinedOrNull = function(prop) {
-﻿        return jsExt.isUndefined(prop) || prop == null;
-﻿    };
-
-﻿    jsExt.isObject = function(obj) {
-﻿        return typeof (obj) === 'object';
-﻿    };
-
-﻿    jsExt.isFunction = function(obj) {
-﻿        return typeof (obj) === 'function';
-﻿    };
+	jsExt.isObjectConstructor = isObjectConstructor;
+	jsExt.isUndefined = isUndefined;
+	jsExt.isUndefinedOrNull = isUndefinedOrNull;
+	jsExt.isObject = isObject;
+	jsExt.isFunction = isFunction;
 
     return jsExt;
 })();
