@@ -107,6 +107,7 @@ var jsExtender = jsExtender || (function () {
 			};
 			
 			addCreate(destination);
+		    addWrapFunction(destination);
 		}
 		
 		/*
@@ -118,7 +119,14 @@ var jsExtender = jsExtender || (function () {
 				constructProto = (destConstruct.apply(constructProto, arguments) || constructProto);
                 return constructProto;
             };
-        }
+		}
+
+		function addWrapFunction(destConstruct) {
+		    destConstruct.wrapFunction = function(funcName, baseFunc) {
+		        var oldBase = destConstruct[funcName];
+		        destConstruct[funcName] = wrapFunction(baseFunc, oldBase);
+		    }
+		}
 
 		function createConstructor(source, destination) {
 			function defaultConstructor() { }
