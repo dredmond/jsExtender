@@ -54,14 +54,14 @@ var jsExtender = jsExtender || (function () {
 		// Copys all properties from source to the destination if they don't already
 		// exist in the destination. Otherwise, it creates a new function that wraps around
 		// the source function and allows the inherited function to call the base function (destination).
-		function copyProperties(destination, source) {
+		function copyProperties(destination, source, baseClass) {
 			var propNames = getOwnPropertyNames(source);
 
 			for (var i = 0; i < propNames.length; i++) {
 				var p = propNames[i];
 
-				if (isFunction(destination[p]) && isFunction(source[p])) {
-					destination[p] = wrapFunction(destination[p], source[p]);
+				if (p !== 'constructor' && isFunction(destination[p]) && isFunction(source[p])) {
+				    destination[p] = buildWrappedFunction(p, baseClass, source);
 				} else {
 					destination[p] = source[p];
 				}
@@ -78,31 +78,69 @@ var jsExtender = jsExtender || (function () {
 		 * result of the source function.
 		 */
 		function wrapFunction(baseFunc, sourceFunc) {
-			return function () {
-				var oldBase = this.base;
+		    return function () {
+		        var oldBase = this.base;
 
-				this.base = baseFunc;
-				var result = sourceFunc.apply(this, arguments);
-				this.base = oldBase;
+		        this.base = baseFunc;
+		        var result = sourceFunc.apply(this, arguments);
+		        this.base = oldBase;
 
-				return result;
-			};
+		        return result;
+		    };
 		}
+
+        function buildWrappedFunction(funcName, baseClass, sourceClass) {
+            var parentClass = baseClass,
+                wrappedFunc = null,
+                funcArray = [];
+
+            if (hasOwnProperty.call(sourceClass, funcName) && isFunction(sourceClass[funcName]))
+                funcArray.push(sourceClass[funcName]);
+
+            while (parentClass) {
+                var parentProto = parentClass.prototype;
+
+                if (hasOwnProperty.call(parentProto, funcName) && isFunction(parentProto[funcName]))
+                    funcArray.unshift(parentProto[funcName]);
+
+                parentClass = parentClass.prototype.parent;
+            }
+
+            for (var i = 0; i < funcArray.length; i++) {
+                // Re-wrap wrappedFunc
+                wrappedFunc = wrapFunction(wrappedFunc, funcArray[i]);
+            }
+
+            return wrappedFunc;
+        }
 
 		/*
 		 * Creates a new extend function and adds it to the destination.
 		 * This allows the destination to stay in scope for the next extend call.
 		 */
-		function addExtend(destination) {
+		function addExtend(destination, base, parent) {
+		    destination.parent = parent;
+		    destination.currentClass = base;
+		    destination.prototype.parent = parent;
+		    destination.prototype.currentClass = base;
+            
 			destination.extend = function (extender) {
-				var currentExtender = getPrototypeObject(extender),
-					extendProto = createConstructor(currentExtender, destination);
+			    var currentExtender = getPrototypeObject(extender);
+			    var extendProto = createConstructor(currentExtender, destination);
 
-				extendProto.prototype = createProto(destination.prototype);
-				copyProperties(extendProto.prototype, currentExtender);
+			    extendProto.prototype = createProto(destination.prototype);
 
-				addExtend(extendProto);
-				
+			    // currentExtender = extender constructor function
+			    // extendProto = new extension
+                // extendProto.prototype = destination.prototype
+				copyProperties(extendProto.prototype, currentExtender, destination);
+				addExtend(extendProto, currentExtender, destination);
+
+				//extendProto.prototype.parent = base;
+				//extendProto.prototype.currentClass = currentExtender;
+
+				//extendProto.parent = destination;
+
 				return extendProto;
 			};
 			
@@ -122,9 +160,9 @@ var jsExtender = jsExtender || (function () {
 		}
 
 		function addWrapFunction(destConstruct) {
-		    destConstruct.wrapFunction = function(funcName, baseFunc) {
-		        var oldBase = destConstruct[funcName];
-		        destConstruct[funcName] = wrapFunction(baseFunc, oldBase);
+		    destConstruct.wrapFunction = function (funcName, baseFunc) {
+		        return baseFunc;
+		        //return buildWrappedFunction(funcName, destConstruct, )
 		    }
 		}
 
@@ -135,15 +173,18 @@ var jsExtender = jsExtender || (function () {
 				return defaultConstructor;
 			}
 
-			var proto = source.constructor,
-				invalidConstructor = isObjectConstructor(proto);
+			var invalidConstructor = isObjectConstructor(source.constructor);
 
 			if (isUndefinedOrNull(destination) || !isFunction(destination.prototype.constructor)) {
-				return (!invalidConstructor) ? proto : defaultConstructor;
+			    if (!invalidConstructor) {
+			        return source.constructor;
+			    }
+
+			    return defaultConstructor;
 			}
 
 			if (!invalidConstructor) {
-				return wrapFunction(destination.prototype.constructor, proto);
+			    return buildWrappedFunction('constructor', destination, source);
 			}
 
 			return destination.prototype.constructor;
@@ -153,11 +194,13 @@ var jsExtender = jsExtender || (function () {
 			classExtension = {};
 		}
 
-		var baseExtend = getPrototypeObject(classExtension),
+	    var baseExtend = getPrototypeObject(classExtension),
 			classConstruct = createConstructor(baseExtend);
 
-		classConstruct.prototype = createProto(baseExtend);
-		addExtend(classConstruct);
+	    classConstruct.prototype = createProto(baseExtend.prototype);
+	    classConstruct.prototype.constructor = classConstruct;
+
+	    addExtend(classConstruct, classConstruct);
 
 		return classConstruct;
 	};
