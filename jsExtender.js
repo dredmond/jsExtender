@@ -10,7 +10,7 @@
  * Created: 07/18/2014
  * Project Url: https://github.com/dredmond/jsExtender
  *
- * Last Modified: 08/24/2014
+ * Last Modified: 12/09/2014
  *
  */
 var jsExtender = jsExtender || (function () {
@@ -94,16 +94,19 @@ var jsExtender = jsExtender || (function () {
                 wrappedFunc = null,
                 funcArray = [];
 
-            if (hasOwnProperty.call(sourceClass, funcName) && isFunction(sourceClass[funcName]))
+            if (sourceClass && hasOwnProperty.call(sourceClass, funcName) && isFunction(sourceClass[funcName]))
                 funcArray.push(sourceClass[funcName]);
 
             while (parentClass) {
-                var parentProto = parentClass.prototype;
+                var parentProto = parentClass.currentClass;
+				
+				if (!parentProto)
+					parentProto = parentClass;
 
                 if (hasOwnProperty.call(parentProto, funcName) && isFunction(parentProto[funcName]))
                     funcArray.unshift(parentProto[funcName]);
 
-                parentClass = parentClass.prototype.parent;
+                parentClass = parentClass.parent;
             }
 
             for (var i = 0; i < funcArray.length; i++) {
@@ -160,8 +163,11 @@ var jsExtender = jsExtender || (function () {
 		}
 
 		function addWrapFunction(destConstruct) {
-		    destConstruct.wrapFunction = function (funcName, baseFunc) {
-		        return baseFunc;
+			if (destConstruct.wrapFunction)
+				return;
+				
+		    destConstruct.prototype.wrapFunction = function (funcName, sourceClass) {
+		        return buildWrappedFunction(funcName, this, sourceClass);
 		        //return buildWrappedFunction(funcName, destConstruct, )
 		    }
 		}
@@ -196,8 +202,8 @@ var jsExtender = jsExtender || (function () {
 
 	    var baseExtend = getPrototypeObject(classExtension),
 			classConstruct = createConstructor(baseExtend);
-
-	    classConstruct.prototype = createProto(baseExtend.prototype);
+			
+	    classConstruct.prototype = createProto(baseExtend);
 	    classConstruct.prototype.constructor = classConstruct;
 
 	    addExtend(classConstruct, classConstruct);

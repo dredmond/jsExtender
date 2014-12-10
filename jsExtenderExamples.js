@@ -94,11 +94,20 @@ jsExtExamples.writeOutput(objectDefinedInstance.publicVar);
 jsExtExamples.writeOutput();
 
 // Using jsExtender's default constructor.
-var defaultClass = jsExtender();
+var defaultClass = jsExtender({
+	constructor: function () {
+		function testFunc() {
+			console.log('Testing the test function!');
+		};
+	
+		defaultClass.prototype.testFunc = testFunc;
+		this.testFunc = this.wrapFunction('testFunc', defaultClass.prototype);
+	}
+});
 
-defaultClass.prototype.testFunc = function () {
+/*defaultClass.prototype.testFunc = function () {
     console.log('Testing the test function!');
-};
+};*/
 
 // Create a defaultClass object.
 var defaultInstance = defaultClass.create();
@@ -121,6 +130,13 @@ defaultInstanceExtended.testFunc();
 // The constructor function that will inherit from defaultClass.
 function ExtensionConstructor () {
     console.log('The default constructor has been overridden by the ExtensionConstructor!');
+	
+	ExtensionConstructor.prototype.testFunc = function () {
+		console.log('New test func from ExtensionConstructor.');
+		this.base.call(this);
+	};
+
+	this.testFunc = this.wrapFunction('testFunc');
 }
 
 // This prototyped function will be available after the inheritance occurs.
