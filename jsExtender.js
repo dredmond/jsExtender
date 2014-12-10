@@ -16,10 +16,12 @@
 var jsExtender = jsExtender || (function () {
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
 		getOwnPropertyNames = Object.getOwnPropertyNames,
-		keys = Object.keys;
+		getPrototypeOf = Object.prototype.getPrototypeOf
+		keys = Object.keys,
+		objectConstructor = Object.prototype.constructor;
 		
 	function isObjectConstructor(func) {
-	    return Object.prototype.constructor === func;
+	    return objectConstructor === func;
 	}
 
 	function isUndefined(prop) {
@@ -60,7 +62,10 @@ var jsExtender = jsExtender || (function () {
 			for (var i = 0; i < propNames.length; i++) {
 				var p = propNames[i];
 
-				if (p !== 'constructor' && isFunction(destination[p]) && isFunction(source[p])) {
+				if (p === 'constructor')
+					continue;
+				
+				if (isFunction(destination[p]) && isFunction(source[p])) {
 				    destination[p] = buildWrappedFunction(p, baseClass, source);
 				} else {
 					destination[p] = source[p];
@@ -129,15 +134,16 @@ var jsExtender = jsExtender || (function () {
             
 			destination.extend = function (extender) {
 			    var currentExtender = getPrototypeObject(extender);
-			    var extendProto = createConstructor(currentExtender, destination);
+			    var extendProto = getBaseConstructor(currentExtender, destination);
 
 			    extendProto.prototype = createProto(destination.prototype);
-
+				extendProto.constructor = extendProto;
+				
 			    // currentExtender = extender constructor function
 			    // extendProto = new extension
                 // extendProto.prototype = destination.prototype
 				copyProperties(extendProto.prototype, currentExtender, destination);
-				addExtend(extendProto, currentExtender, destination);
+				addExtend(extendProto, currentExtender, destination.prototype);
 
 				//extendProto.prototype.parent = base;
 				//extendProto.prototype.currentClass = currentExtender;
@@ -171,7 +177,8 @@ var jsExtender = jsExtender || (function () {
 		        //return buildWrappedFunction(funcName, destConstruct, )
 		    }
 		}
-
+		
+		/*
 		function createConstructor(source, destination) {
 			function defaultConstructor() { }
 
@@ -194,19 +201,46 @@ var jsExtender = jsExtender || (function () {
 			}
 
 			return destination.prototype.constructor;
-		}
+		}*/
+		
+		function getBaseConstructor(child, base) {
+			function defaultConstructor() { }
+			
+			var c = defaultConstructor,
+				b = defaultConstructor;
+			
+			if (isUndefinedOrNull(child) || !isFunction(child.constructor)) {
+				return defaultConstructor;
+			}
 
+			var invalidConstructor = isObjectConstructor(child.constructor);
+			
+			if (!invalidConstructor)
+				c = child.constructor;
+			
+			if (!isUndefinedOrNull(base) && isFunction(base.constructor)) {
+				b = base.constructor;
+			}
+			
+			function func() {
+				b.apply(this, arguments);
+				c.apply(this, arguments);
+			};
+			
+			return func;
+		}
+		
 		if (!classExtension) {
 			classExtension = {};
 		}
 
 	    var baseExtend = getPrototypeObject(classExtension),
-			classConstruct = createConstructor(baseExtend);
+			classConstruct = getBaseConstructor(baseExtend);
 			
 	    classConstruct.prototype = createProto(baseExtend);
-	    classConstruct.prototype.constructor = classConstruct;
+	    classConstruct.prototype.constructor = baseExtend.constructor;
 
-	    addExtend(classConstruct, classConstruct);
+	    addExtend(classConstruct, baseExtend);
 
 		return classConstruct;
 	};
