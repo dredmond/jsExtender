@@ -184,7 +184,7 @@ var jsExtender = jsExtender || (function () {
         }
         
         function addWrapFunction(destConstruct) {
-            if (destConstruct.wrapFunctions)
+            if (destConstruct.prototype.wrapFunction)
                 return;
         
             destConstruct.prototype.wrapFunction = function(funcName) {
