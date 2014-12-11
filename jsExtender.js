@@ -236,7 +236,7 @@ var jsExtender = jsExtender || (function () {
                 // Find all prototyped functions that need wrapped
                 // Wrap prototyped functions
 
-                this.wrapAllFunctions();
+                //this.wrapAllFunctions();
             }
             
             var c = defaultConstructor,
