@@ -65,7 +65,7 @@ var jsExtender = jsExtender || (function () {
                 if (p === 'constructor')
                     continue;
 
-                if (isFunction(destination[p]) && isFunction(source[p])) {
+                if (isFunction(destination[p]) && isFunction(source[p]) && baseClass) {
                     destination[p] = buildWrappedFunction(p, baseClass, source);
                 } else {
                     destination[p] = source[p];
@@ -96,18 +96,21 @@ var jsExtender = jsExtender || (function () {
 
         function findNextClassWithDefinition(funcName, baseClass) {
             var found = null,
-                currentClass = baseClass;
+                currentClass = baseClass,
+                proto;
             
             while (found === null && currentClass) {
-                if (isFunction(currentClass) && hasOwnProperty.call(currentClass.prototype, funcName)) {
-                    found = currentClass.prototype[funcName];
+                if (isFunction(currentClass)) {
+                    proto = currentClass.prototype;
+                    if (hasOwnProperty.call(proto, funcName)) {
+                        found = proto[funcName];
+                    }
                 } else if (isObject(currentClass)) {
+                    proto = getPrototypeOf(currentClass);
+
                     if (hasOwnProperty.call(currentClass, funcName)) {
                         found = currentClass[funcName];
-                    }
-                    
-                    var proto = getPrototypeOf(currentClass);
-                    if (hasOwnProperty.call(proto, funcName)) {
+                    } else if (hasOwnProperty.call(proto, funcName)) {
                         found = proto[funcName];
                     }
                 }
@@ -131,8 +134,8 @@ var jsExtender = jsExtender || (function () {
 
             var result = findNextClassWithDefinition(funcName, parentClass);
                 
-            while (result.currentClass) {
-                if (result.found !== null && isFunction(result.found)) {
+            while (result.found) {
+                if (isFunction(result.found)) {
                     funcArray.unshift(result.found);
                 }
                 
@@ -227,6 +230,7 @@ var jsExtender = jsExtender || (function () {
         classConstruct.prototype = createProto(baseExtend);
         classConstruct.constructor = classConstruct;
 
+        copyProperties(classConstruct.prototype, classExtension);
         addExtend(classConstruct, baseExtend);
 
         return classConstruct;
