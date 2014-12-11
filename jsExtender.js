@@ -10,7 +10,7 @@
  * Created: 07/18/2014
  * Project Url: https://github.com/dredmond/jsExtender
  *
- * Last Modified: 12/09/2014
+ * Last Modified: 12/11/2014
  *
  */
 var jsExtender = jsExtender || (function () {
@@ -155,6 +155,7 @@ var jsExtender = jsExtender || (function () {
         * This allows the destination to stay in scope for the next extend call.
         */
         function addExtend(destination, base, parent) {
+            copyProperties(destination.prototype, base, parent);
             destination.parent = parent;
             destination.prototype.parent = parent;
 
@@ -165,7 +166,6 @@ var jsExtender = jsExtender || (function () {
                 extendProto.prototype = createProto(destination.prototype);
                 extendProto.constructor = extendProto;
 
-                copyProperties(extendProto.prototype, currentExtender, destination);
                 addExtend(extendProto, currentExtender, destination.prototype);
 
                 return extendProto;
@@ -173,6 +173,7 @@ var jsExtender = jsExtender || (function () {
 
             addCreate(destination);
             addWrapFunction(destination);
+            addWrapAllFunctions(destination);
         }
 
         /*
@@ -186,12 +187,42 @@ var jsExtender = jsExtender || (function () {
             };
         }
         
+        function addWrapAllFunctions(destConstruct) {
+            if (destConstruct.prototype.wrapAllFunctions)
+                return;
+
+            destConstruct.prototype.wrapAllFunctions = function () {
+                var proto = getPrototypeOf(this);
+                while (proto) {
+                    var propNames = getOwnPropertyNames(proto);
+
+                    for (var i = 0; i < propNames.length; i++) {
+                        console.log(propNames);
+                    }
+
+                    proto = getPrototypeOf(proto);
+                }
+
+
+
+                //var wrappedFunc = buildWrappedFunction(funcName, this);
+                //this[funcName] = wrappedFunc;
+                //return wrappedFunc;
+            };
+        }
+
         function addWrapFunction(destConstruct) {
             if (destConstruct.prototype.wrapFunction)
                 return;
         
-            destConstruct.prototype.wrapFunction = function(funcName) {
-                return buildWrappedFunction(funcName, this);
+            destConstruct.prototype.wrapFunction = function (funcName, proto, fn) {
+                // Add method to the class prototype
+                if (proto && fn && !hasOwnProperty.call(proto, funcName))
+                    proto[funcName] = fn;
+
+                var wrappedFunc = buildWrappedFunction(funcName, this);
+                this[funcName] = wrappedFunc;
+                return wrappedFunc;
             };
         }
         
@@ -201,6 +232,11 @@ var jsExtender = jsExtender || (function () {
             function func() {
                 b.apply(this, arguments);
                 c.apply(this, arguments);
+
+                // Find all prototyped functions that need wrapped
+                // Wrap prototyped functions
+
+                this.wrapAllFunctions();
             }
             
             var c = defaultConstructor,
@@ -230,7 +266,6 @@ var jsExtender = jsExtender || (function () {
         classConstruct.prototype = createProto(baseExtend);
         classConstruct.constructor = classConstruct;
 
-        copyProperties(classConstruct.prototype, classExtension);
         addExtend(classConstruct, baseExtend);
 
         return classConstruct;
