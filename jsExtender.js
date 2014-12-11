@@ -14,86 +14,113 @@
  *
  */
 var jsExtender = jsExtender || (function () {
-	var hasOwnProperty = Object.prototype.hasOwnProperty,
-		getOwnPropertyNames = Object.getOwnPropertyNames,
-		getPrototypeOf = Object.prototype.getPrototypeOf,
-		keys = Object.keys,
-		objectConstructor = Object.prototype.constructor;
-		
-	function isObjectConstructor(func) {
-	    return objectConstructor === func;
-	}
+    var hasOwnProperty = Object.prototype.hasOwnProperty,
+        getOwnPropertyNames = Object.getOwnPropertyNames,
+        getPrototypeOf = Object.getPrototypeOf,
+        keys = Object.keys,
+        objectConstructor = Object.prototype.constructor;
 
-	function isUndefined(prop) {
-	    return typeof (prop) === 'undefined';
-	}
+    function isObjectConstructor(func) {
+        return objectConstructor === func;
+    }
 
-	function isUndefinedOrNull(prop) {
-	    return isUndefined(prop) || prop == null;
-	}
+    function isUndefined(prop) {
+        return typeof (prop) === 'undefined';
+    }
 
-	function isObject(obj) {
-	    return typeof (obj) === 'object';
-	}
+    function isUndefinedOrNull(prop) {
+        return isUndefined(prop) || prop == null;
+    }
 
-	function isFunction(obj) {
-	    return typeof (obj) === 'function';
-	}
+    function isObject(obj) {
+        return typeof (obj) === 'object';
+    }
 
-	var jsExt = function (classExtension) {
-		// Takes object or prototype and makes a new constructor function
-		// that inherits it.
-		function createProto(e) {
-			function func() { }
-			func.prototype = e;
-			return new func();
-		}
+    function isFunction(obj) {
+        return typeof (obj) === 'function';
+    }
 
-		function getPrototypeObject(extender) {
-			return (isObject(extender)) ? extender : extender.prototype;
-		}
+    var jsExt = function (classExtension) {
+        // Takes object or prototype and makes a new constructor function
+        // that inherits it.
+        function createProto(e) {
+            function func() { }
+            func.prototype = e;
+            return new func();
+        }
 
-		// Copys all properties from source to the destination if they don't already
-		// exist in the destination. Otherwise, it creates a new function that wraps around
-		// the source function and allows the inherited function to call the base function (destination).
-		function copyProperties(destination, source, baseClass) {
-			var propNames = getOwnPropertyNames(source);
+        function getPrototypeObject(extender) {
+            return (isObject(extender)) ? extender : extender.prototype;
+        }
 
-			for (var i = 0; i < propNames.length; i++) {
-				var p = propNames[i];
+        // Copys all properties from source to the destination if they don't already
+        // exist in the destination. Otherwise, it creates a new function that wraps around
+        // the source function and allows the inherited function to call the base function (destination).
+        function copyProperties(destination, source, baseClass) {
+            var propNames = getOwnPropertyNames(source);
 
-				if (p === 'constructor')
-					continue;
-				
-				if (isFunction(destination[p]) && isFunction(source[p])) {
-				    destination[p] = buildWrappedFunction(p, baseClass, source);
-				} else {
-					destination[p] = source[p];
-				}
-			}
-		}
+            for (var i = 0; i < propNames.length; i++) {
+                var p = propNames[i];
 
-		/* 
-		 * Function wrapper for existing destination functions.
-		 * Creates and returns a new function that copies the old base function
-		 * and replaces it with the new base function. 
-		 * 
-		 * It calls the source function with the current arguments and stores the result.
-		 * Then it replaces the base function with the old base function and returns the
-		 * result of the source function.
-		 */
-		function wrapFunction(baseFunc, sourceFunc) {
-		    return function () {
-		        var oldBase = this.base;
+                if (p === 'constructor')
+                    continue;
 
-		        this.base = baseFunc;
-		        var result = sourceFunc.apply(this, arguments);
-		        this.base = oldBase;
+                if (isFunction(destination[p]) && isFunction(source[p])) {
+                    destination[p] = buildWrappedFunction(p, baseClass, source);
+                } else {
+                    destination[p] = source[p];
+                }
+            }
+        }
 
-		        return result;
-		    };
-		}
+        /* 
+        * Function wrapper for existing destination functions.
+        * Creates and returns a new function that copies the old base function
+        * and replaces it with the new base function. 
+        * 
+        * It calls the source function with the current arguments and stores the result.
+        * Then it replaces the base function with the old base function and returns the
+        * result of the source function.
+        */
+        function wrapFunction(baseFunc, sourceFunc) {
+            return function () {
+                var oldBase = this.base;
 
+                this.base = baseFunc;
+                var result = sourceFunc.apply(this, arguments);
+                this.base = oldBase;
+
+                return result;
+            };
+        }
+
+        function findNextClassWithDefinition(funcName, baseClass) {
+            var found = null,
+                currentClass = baseClass;
+            
+            while (found === null && currentClass) {
+                if (isFunction(currentClass) && hasOwnProperty.call(currentClass.prototype, funcName)) {
+                    found = currentClass.prototype[funcName];
+                } else if (isObject(currentClass)) {
+                    if (hasOwnProperty.call(currentClass, funcName)) {
+                        found = currentClass[funcName];
+                    }
+                    
+                    var proto = getPrototypeOf(currentClass);
+                    if (hasOwnProperty.call(proto, funcName)) {
+                        found = proto[funcName];
+                    }
+                }
+                
+                currentClass = currentClass.parent;
+            }
+            
+            return {
+                found: found,
+                currentClass: currentClass
+            };
+        }
+        
         function buildWrappedFunction(funcName, baseClass, sourceClass) {
             var parentClass = baseClass,
                 wrappedFunc = null,
@@ -102,16 +129,14 @@ var jsExtender = jsExtender || (function () {
             if (sourceClass && hasOwnProperty.call(sourceClass, funcName) && isFunction(sourceClass[funcName]))
                 funcArray.push(sourceClass[funcName]);
 
-            while (parentClass) {
-                var parentProto = parentClass.currentClass;
-				
-				if (!parentProto)
-					parentProto = parentClass;
-
-                if (hasOwnProperty.call(parentProto, funcName) && isFunction(parentProto[funcName]))
-                    funcArray.unshift(parentProto[funcName]);
-
-                parentClass = parentClass.parent;
+            var result = findNextClassWithDefinition(funcName, parentClass);
+                
+            while (result.currentClass) {
+                if (result.found !== null && isFunction(result.found)) {
+                    funcArray.unshift(result.found);
+                }
+                
+                result = findNextClassWithDefinition(funcName, result.currentClass);
             }
 
             for (var i = 0; i < funcArray.length; i++) {
@@ -122,137 +147,99 @@ var jsExtender = jsExtender || (function () {
             return wrappedFunc;
         }
 
-		/*
-		 * Creates a new extend function and adds it to the destination.
-		 * This allows the destination to stay in scope for the next extend call.
-		 */
-		function addExtend(destination, base, parent) {
-		    destination.parent = parent;
-		    destination.currentClass = base;
-		    destination.prototype.parent = parent;
-		    destination.prototype.currentClass = base;
-            
-			destination.extend = function (extender) {
-			    var currentExtender = getPrototypeObject(extender);
-			    var extendProto = getBaseConstructor(currentExtender, destination);
+        /*
+        * Creates a new extend function and adds it to the destination.
+        * This allows the destination to stay in scope for the next extend call.
+        */
+        function addExtend(destination, base, parent) {
+            destination.parent = parent;
+            destination.prototype.parent = parent;
 
-			    extendProto.prototype = createProto(destination.prototype);
-				extendProto.constructor = extendProto;
-				
-			    // currentExtender = extender constructor function
-			    // extendProto = new extension
-                // extendProto.prototype = destination.prototype
-				copyProperties(extendProto.prototype, currentExtender, destination);
-				addExtend(extendProto, currentExtender, destination.prototype);
+            destination.extend = function (extender) {
+                var currentExtender = getPrototypeObject(extender);
+                var extendProto = getBaseConstructor(currentExtender, destination);
 
-				//extendProto.prototype.parent = base;
-				//extendProto.prototype.currentClass = currentExtender;
+                extendProto.prototype = createProto(destination.prototype);
+                extendProto.constructor = extendProto;
 
-				//extendProto.parent = destination;
+                copyProperties(extendProto.prototype, currentExtender, destination);
+                addExtend(extendProto, currentExtender, destination.prototype);
 
-				return extendProto;
-			};
-			
-			addCreate(destination);
-		    addWrapFunction(destination);
-		}
-		
-		/*
-		 * Allow creation of object without the use of the new keyword.
-		 */
-		function addCreate(destConstruct) {
+                return extendProto;
+            };
+
+            addCreate(destination);
+            addWrapFunction(destination);
+        }
+
+        /*
+        * Allow creation of object without the use of the new keyword.
+        */
+        function addCreate(destConstruct) {
             destConstruct.create = function() {
-				var constructProto = createProto(destConstruct.prototype);
-				constructProto = (destConstruct.apply(constructProto, arguments) || constructProto);
+                var constructProto = createProto(destConstruct.prototype);
+                constructProto = (destConstruct.apply(constructProto, arguments) || constructProto);
                 return constructProto;
             };
-		}
-
-		function addWrapFunction(destConstruct) {
-			if (destConstruct.wrapFunction)
-				return;
-				
-		    destConstruct.prototype.wrapFunction = function (funcName, sourceClass) {
-		        return buildWrappedFunction(funcName, this, sourceClass);
-		        //return buildWrappedFunction(funcName, destConstruct, )
-		    }
-		}
-		
-		/*
-		function createConstructor(source, destination) {
-			function defaultConstructor() { }
-
-			if (isUndefinedOrNull(source) || !isFunction(source.constructor)) {
-				return defaultConstructor;
-			}
-
-			var invalidConstructor = isObjectConstructor(source.constructor);
-
-			if (isUndefinedOrNull(destination) || !isFunction(destination.prototype.constructor)) {
-			    if (!invalidConstructor) {
-			        return source.constructor;
-			    }
-
-			    return defaultConstructor;
-			}
-
-			if (!invalidConstructor) {
-			    return buildWrappedFunction('constructor', destination, source);
-			}
-
-			return destination.prototype.constructor;
-		}*/
-		
+        }
+        
+        function addWrapFunction(destConstruct) {
+            if (destConstruct.wrapFunctions)
+                return;
+        
+            destConstruct.prototype.wrapFunction = function(funcName) {
+                return buildWrappedFunction(funcName, this);
+            };
+        }
+        
         function getBaseConstructor(child, base) {
-        function defaultConstructor() { }
-			
-            var c = defaultConstructor,
-	            b = defaultConstructor;
-			
-            if (isUndefinedOrNull(child) || !isFunction(child.constructor)) {
-	            return defaultConstructor;
-            }
+            function defaultConstructor() { }
 
-            var invalidConstructor = isObjectConstructor(child.constructor);
-			
-            if (!invalidConstructor)
-	            c = child.constructor;
-			
-            if (!isUndefinedOrNull(base) && isFunction(base.constructor)) {
-                b = base.constructor;
-            }
-			
             function func() {
                 b.apply(this, arguments);
                 c.apply(this, arguments);
-            };
-			
+            }
+            
+            var c = defaultConstructor,
+                b = defaultConstructor;
+
+            if (isUndefinedOrNull(child) || !isFunction(child.constructor)) {
+                return defaultConstructor;
+            }
+            
+            if (!isObjectConstructor(child.constructor))
+                c = child.constructor;
+
+            if (!isUndefinedOrNull(base) && isFunction(base.constructor)) {
+                b = base.constructor;
+            }
+
             return func;
         }
-		
-		if (!classExtension) {
-			classExtension = {};
-		}
 
-	    var baseExtend = getPrototypeObject(classExtension),
-			classConstruct = getBaseConstructor(baseExtend);
-			
-	    classConstruct.prototype = createProto(baseExtend);
-	    classConstruct.constructor = classConstruct;
+        if (!classExtension) {
+            classExtension = {};
+        }
 
-	    addExtend(classConstruct, baseExtend);
+        var baseExtend = getPrototypeObject(classExtension),
+            classConstruct = getBaseConstructor(baseExtend);
 
-		return classConstruct;
-	};
+        classConstruct.prototype = createProto(baseExtend);
+        classConstruct.constructor = classConstruct;
 
-	jsExt.hasOwnProperty = hasOwnProperty;
-	jsExt.getOwnPropertyNames = getOwnPropertyNames;
-	jsExt.keys = keys;
-	jsExt.isObjectConstructor = isObjectConstructor;
-	jsExt.isUndefined = isUndefined;
-	jsExt.isUndefinedOrNull = isUndefinedOrNull;
-	jsExt.isObject = isObject;
-	jsExt.isFunction = isFunction;
+        addExtend(classConstruct, baseExtend);
+
+        return classConstruct;
+    };
+
+    jsExt.hasOwnProperty = hasOwnProperty;
+    jsExt.getOwnPropertyNames = getOwnPropertyNames;
+    jsExt.keys = keys;
+    jsExt.isObjectConstructor = isObjectConstructor;
+    jsExt.isUndefined = isUndefined;
+    jsExt.isUndefinedOrNull = isUndefinedOrNull;
+    jsExt.isObject = isObject;
+    jsExt.isFunction = isFunction;
 
     return jsExt;
 })();
