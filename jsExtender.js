@@ -16,7 +16,7 @@
 var jsExtender = jsExtender || (function () {
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
 		getOwnPropertyNames = Object.getOwnPropertyNames,
-		getPrototypeOf = Object.prototype.getPrototypeOf
+		getPrototypeOf = Object.prototype.getPrototypeOf,
 		keys = Object.keys,
 		objectConstructor = Object.prototype.constructor;
 		
@@ -203,32 +203,32 @@ var jsExtender = jsExtender || (function () {
 			return destination.prototype.constructor;
 		}*/
 		
-		function getBaseConstructor(child, base) {
-			function defaultConstructor() { }
+        function getBaseConstructor(child, base) {
+        function defaultConstructor() { }
 			
-			var c = defaultConstructor,
-				b = defaultConstructor;
+            var c = defaultConstructor,
+	            b = defaultConstructor;
 			
-			if (isUndefinedOrNull(child) || !isFunction(child.constructor)) {
-				return defaultConstructor;
-			}
+            if (isUndefinedOrNull(child) || !isFunction(child.constructor)) {
+	            return defaultConstructor;
+            }
 
-			var invalidConstructor = isObjectConstructor(child.constructor);
+            var invalidConstructor = isObjectConstructor(child.constructor);
 			
-			if (!invalidConstructor)
-				c = child.constructor;
+            if (!invalidConstructor)
+	            c = child.constructor;
 			
-			if (!isUndefinedOrNull(base) && isFunction(base.constructor)) {
-				b = base.constructor;
-			}
+            if (!isUndefinedOrNull(base) && isFunction(base.constructor)) {
+                b = base.constructor;
+            }
 			
-			function func() {
-				b.apply(this, arguments);
-				c.apply(this, arguments);
-			};
+            function func() {
+                b.apply(this, arguments);
+                c.apply(this, arguments);
+            };
 			
-			return func;
-		}
+            return func;
+        }
 		
 		if (!classExtension) {
 			classExtension = {};
@@ -238,7 +238,7 @@ var jsExtender = jsExtender || (function () {
 			classConstruct = getBaseConstructor(baseExtend);
 			
 	    classConstruct.prototype = createProto(baseExtend);
-	    classConstruct.prototype.constructor = baseExtend.constructor;
+	    classConstruct.constructor = classConstruct;
 
 	    addExtend(classConstruct, baseExtend);
 
