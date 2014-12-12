@@ -1,57 +1,57 @@
 var jsExtExamples = (function() {
-	// Private Variables
-	var output = null;
-	
-	function applyIndent(msg, indent) {
-		var i = 0,
-			spaces = '';
-		while (i++ < indent) {
-			spaces += '&nbsp;';
-		}
-		
-		return spaces + msg;
-	}
-	
-	// extenderExamplesClass Definition
-	var extenderExamplesClass = jsExtender({
-			constructor: function () {
-				output = document.getElementById('output');
-			},
-			writeOutput: function (msg, indent) {
-				if (output === null)
-					return;
-				
-				msg = typeof(msg) !== 'undefined' ? msg : '';
-				
-				if (typeof(indent) === 'undefined' || indent == null)
-					indent = 0;
-				
-				if (Object.prototype.toString.call(msg) === '[object Array]') {
-					var objMsg = '';
-					for (var i = 0; i < msg.length; i++) {
-						var value = msg[i],
-							propType = typeof (msg[i]);
-						objMsg += applyIndent('[' + i + '] = ' + value + ' (' + propType + ')<br />', indent);
-					}
-					msg = objMsg;
-				} else if (typeof (msg) === 'object') {
-					var objMsg = '';
-					for (var propName in msg) {
-						var propType = typeof (msg[propName]);
-						objMsg += applyIndent(propName + ' (' + propType + ')<br />', indent);
-					}
-					msg = objMsg;
-				} else {
-					msg = applyIndent(msg + '<br />', indent);
-				}
-				
-				output.innerHTML += msg;
-			}
-		});
-	
-	// Create instance and return it.
-	var extenderExamples = new extenderExamplesClass();
-	return extenderExamples;
+    // Private Variables
+    var output = null;
+
+    function applyIndent(msg, indent) {
+        var i = 0,
+            spaces = '';
+        while (i++ < indent) {
+            spaces += '&nbsp;';
+        }
+
+        return spaces + msg;
+    }
+
+    // extenderExamplesClass Definition
+    var extenderExamplesClass = jsExtender({
+        constructor: function() {
+            output = document.getElementById('output');
+        },
+        writeOutput: function(msg, indent) {
+            if (output === null)
+                return;
+
+            msg = typeof(msg) !== 'undefined' ? msg : '';
+
+            if (typeof(indent) === 'undefined' || indent == null)
+                indent = 0;
+
+            if (Object.prototype.toString.call(msg) === '[object Array]') {
+                var objMsg = '';
+                for (var i = 0; i < msg.length; i++) {
+                    var value = msg[i],
+                        propType = typeof (msg[i]);
+                    objMsg += applyIndent('[' + i + '] = ' + value + ' (' + propType + ')<br />', indent);
+                }
+                msg = objMsg;
+            } else if (typeof (msg) === 'object') {
+                var objMsg = '';
+                for (var propName in msg) {
+                    var propType = typeof (msg[propName]);
+                    objMsg += applyIndent(propName + ' (' + propType + ')<br />', indent);
+                }
+                msg = objMsg;
+            } else {
+                msg = applyIndent(msg + '<br />', indent);
+            }
+
+            output.innerHTML += msg;
+        }
+    });
+
+    // Create instance and return it.
+    var extenderExamples = new extenderExamplesClass();
+    return extenderExamples;
 })();
 
 jsExtExamples.writeOutput('jsExtExamples Properties:');
@@ -68,14 +68,14 @@ jsExtExamples.writeOutput();
 
 // jsExtender using Object Definition
 var objectDefinedClass = jsExtender({
-	constructor: function (arg1, arg2) {
-		this.value1 = arg1;
-		this.value2 = arg2;
-	},
-	publicVar: 'This is a public variable.',
-	addValues: function (x, y, z) {
-		return x + y + z;
-	}
+    constructor: function(arg1, arg2) {
+        this.value1 = arg1;
+        this.value2 = arg2;
+    },
+    publicVar: 'This is a public variable.',
+    addValues: function(x, y, z) {
+        return x + y + z;
+    }
 });
 
 jsExtExamples.writeOutput('objectDefinedClass Properties:');
@@ -95,14 +95,14 @@ jsExtExamples.writeOutput();
 
 // Using jsExtender's default constructor.
 var defaultClass = jsExtender({
-	constructor: function () {
-		function testFunc() {
-			console.log('Testing the test function!');
-		};
-	
-		defaultClass.prototype.testFunc = testFunc;
-		this.testFunc = this.wrapFunction('testFunc', defaultClass.prototype);
-	}
+    constructor: function() {
+        function testFunc() {
+            console.log('Testing the test function!');
+        };
+
+        defaultClass.prototype.testFunc = testFunc;
+        this.testFunc = this.wrapFunction('testFunc', defaultClass.prototype);
+    }
 });
 
 /*defaultClass.prototype.testFunc = function () {
@@ -128,15 +128,15 @@ defaultInstanceExtended = defaultClassExtended.create();
 defaultInstanceExtended.testFunc();
 
 // The constructor function that will inherit from defaultClass.
-function ExtensionConstructor () {
+function ExtensionConstructor() {
     console.log('The default constructor has been overridden by the ExtensionConstructor!');
-	
-	ExtensionConstructor.prototype.testFunc = function () {
-		console.log('New test func from ExtensionConstructor.');
-		this.base.call(this);
-	};
 
-	this.testFunc = this.wrapFunction('testFunc');
+    ExtensionConstructor.prototype.testFunc = function() {
+        console.log('New test func from ExtensionConstructor.');
+        this.base.call(this);
+    };
+
+    this.testFunc = this.wrapFunction('testFunc');
 }
 
 // This prototyped function will be available after the inheritance occurs.
@@ -156,7 +156,7 @@ var extensionFunctionClass = defaultClass.extend(ExtensionConstructor);
  *
  */
 extensionFunctionClass.prototype.afterDeclare = function () {
-	console.log('Calling After Declare.');
+    console.log('Calling After Declare.');
 };
 
 // Create a new instance of the extended default class.
