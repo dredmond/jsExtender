@@ -228,14 +228,18 @@
             function test2Base() {
                 this.test2 = true;
 
-                test2.prototype.wrapFunction('func', test2.prototype, function () {
+                test2.prototype.func = function() {
                     console.log('testing func base2.' + this.test4);
-                });
+                };
+
+                /*this.wrapFunction('func', test2.prototype, function () {
+                    console.log('testing func base2.' + this.test4);
+                });*/
             }
 
             test2Base.prototype.func1 = function () {
                 console.log('testing func3.');
-                this.parent.func1();
+                this.base();
             };
 
             var test2 = test1.extend(test2Base);
@@ -243,15 +247,20 @@
             function test3Base() {
                 this.test2 = true;
 
-                test3.prototype.wrapFunction('func', test3.prototype, function () {
+                test3.prototype.func = function() {
                     console.log('testing func base3.' + this.test4);
                     this.base();
-                });
+                };
+
+                /*this.wrapFunction('func', test3.prototype, function () {
+                    console.log('testing func base3.' + this.test4);
+                    this.base();
+                });*/
             }
 
             test3Base.prototype.func1 = function () {
                 console.log('testing func4.');
-                this.parent.func1();
+                this.base();
             };
 
             var test3 = test2.extend(test3Base);
@@ -271,10 +280,15 @@
 
                     this.test4 = 'Variable from test4.';
 
-                    test4.prototype.wrapFunction('func1', test4.prototype, function () {
+                    test4.prototype.func1 = function() {
                         console.log('func1 from test4 constructor.' + privateVar);
                         this.base();
-                    });
+                    };
+
+                    /*this.wrapFunction('func1', test4.prototype, function () {
+                        console.log('func1 from test4 constructor.' + privateVar);
+                        this.base();
+                    });*/
                 },
                 func: function() {
                     console.log('func from test4.' + this.test4);

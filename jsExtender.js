@@ -65,11 +65,11 @@ var jsExtender = jsExtender || (function () {
                 if (p === 'constructor')
                     continue;
 
-                if (isFunction(destination[p]) && isFunction(source[p]) && baseClass) {
-                    destination[p] = buildWrappedFunction(p, baseClass, source);
-                } else {
+                //if (isFunction(destination[p]) && isFunction(source[p]) && baseClass) {
+                    //destination[p] = buildWrappedFunction(p, baseClass, source);
+                //} else {
                     destination[p] = source[p];
-                }
+                //}
             }
         }
 
@@ -158,13 +158,14 @@ var jsExtender = jsExtender || (function () {
             copyProperties(destination.prototype, base, parent);
             destination.parent = parent;
             destination.prototype.parent = parent;
+            destination.prototype.current = base;
 
             destination.extend = function (extender) {
                 var currentExtender = getPrototypeObject(extender);
                 var extendProto = getBaseConstructor(currentExtender, destination);
 
                 extendProto.prototype = createProto(destination.prototype);
-                extendProto.constructor = extendProto;
+                extendProto.prototype.constructor = extendProto;
 
                 addExtend(extendProto, currentExtender, destination.prototype);
 
@@ -192,22 +193,39 @@ var jsExtender = jsExtender || (function () {
                 return;
 
             destConstruct.prototype.wrapAllFunctions = function () {
-                var proto = getPrototypeOf(this);
-                while (proto) {
-                    var propNames = getOwnPropertyNames(proto);
+                var proto = getPrototypeOf(this),
+                    propNames,
+                    propName,
+                    i,
+                    funcCount = {};
 
-                    for (var i = 0; i < propNames.length; i++) {
-                        console.log(propNames);
+                while (proto && !isObjectConstructor(proto.constructor)) {
+                    propNames = getOwnPropertyNames(proto);
+
+                    for (i = 0; i < propNames.length; i++) {
+                        propName = propNames[i];
+                        if (propName === 'constructor' || !isFunction(proto[propName]))
+                            continue;
+
+                        if (!funcCount[propName])
+                            funcCount[propName] = 0;
+
+                        funcCount[propName] += 1;
+
+                        console.log(propName, funcCount[propName]);
                     }
 
                     proto = getPrototypeOf(proto);
                 }
 
+                propNames = getOwnPropertyNames(funcCount);
+                for (i = 0; i < propNames.length; i++) {
+                    propName = propNames[i];
+                    if (funcCount[propName] <= 1)
+                        continue;
 
-
-                //var wrappedFunc = buildWrappedFunction(funcName, this);
-                //this[funcName] = wrappedFunc;
-                //return wrappedFunc;
+                    this[propName] = buildWrappedFunction(propName, this);
+                }
             };
         }
 
@@ -229,16 +247,6 @@ var jsExtender = jsExtender || (function () {
         function getBaseConstructor(child, base) {
             function defaultConstructor() { }
 
-            function func() {
-                b.apply(this, arguments);
-                c.apply(this, arguments);
-
-                // Find all prototyped functions that need wrapped
-                // Wrap prototyped functions
-
-                //this.wrapAllFunctions();
-            }
-            
             var c = defaultConstructor,
                 b = defaultConstructor;
 
@@ -253,7 +261,19 @@ var jsExtender = jsExtender || (function () {
                 b = base.constructor;
             }
 
-            return func;
+            return makeNewConstructor(child, c, base, b);
+        }
+
+        function makeNewConstructor(childClass, childConstructor, baseClass, baseConstructor) {
+            return function() {
+                baseConstructor.apply(this, arguments);
+                childConstructor.apply(this, arguments);
+                var proto = getPrototypeOf(this);
+                console.log(childClass, baseClass, proto);
+
+                // Wrap prototyped functions
+                this.wrapAllFunctions();
+            };
         }
 
         if (!classExtension) {
@@ -264,7 +284,7 @@ var jsExtender = jsExtender || (function () {
             classConstruct = getBaseConstructor(baseExtend);
 
         classConstruct.prototype = createProto(baseExtend);
-        classConstruct.constructor = classConstruct;
+        classConstruct.prototype.constructor = classConstruct;
 
         addExtend(classConstruct, baseExtend);
 
