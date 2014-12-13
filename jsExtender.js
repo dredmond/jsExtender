@@ -158,13 +158,13 @@ var jsExtender = jsExtender || (function () {
             copyProperties(destination.prototype, base, parent);
             destination.parent = parent;
             destination.prototype.parent = parent;
-            destination.prototype.current = base;
 
             destination.extend = function (extender) {
                 var currentExtender = getPrototypeObject(extender);
                 var extendProto = getBaseConstructor(currentExtender, destination);
 
                 extendProto.prototype = createProto(destination.prototype);
+                extendProto.constructor = extendProto;
                 extendProto.prototype.constructor = extendProto;
 
                 addExtend(extendProto, currentExtender, destination.prototype);
@@ -268,10 +268,19 @@ var jsExtender = jsExtender || (function () {
             return function() {
                 baseConstructor.apply(this, arguments);
                 childConstructor.apply(this, arguments);
-                var proto = getPrototypeOf(this);
-                console.log(childClass, baseClass, proto);
-
-                // Wrap prototyped functions
+                
+                var proto = getPrototypeOf(this),
+                    protoBaseConst = getPrototypeOf(proto).constructor,
+                    baseDefined = !isUndefinedOrNull(baseClass);
+                
+                // Prototype of proto should have the same constructor as the baseConstructor
+                // if the base is defined. Otherwise it will have the same constructor as the childConstructor.
+                // This will tell us if we are on the final constructor call.
+                if ((baseDefined && protoBaseConst !== baseConstructor) || 
+                    (!baseDefined && protoBaseConst !== childConstructor))
+                    return;
+                
+                // Wrap prototyped functions on the final constructor call.
                 this.wrapAllFunctions();
             };
         }
@@ -284,6 +293,7 @@ var jsExtender = jsExtender || (function () {
             classConstruct = getBaseConstructor(baseExtend);
 
         classConstruct.prototype = createProto(baseExtend);
+        classConstruct.constructor = classConstruct;
         classConstruct.prototype.constructor = classConstruct;
 
         addExtend(classConstruct, baseExtend);
