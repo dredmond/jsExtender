@@ -10,7 +10,7 @@
  * Created: 07/18/2014
  * Project Url: https://github.com/dredmond/jsExtender
  *
- * Last Modified: 12/11/2014
+ * Last Modified: 12/16/2014
  *
  */
 var jsExtender = jsExtender || (function () {
@@ -64,12 +64,8 @@ var jsExtender = jsExtender || (function () {
 
                 if (p === 'constructor')
                     continue;
-
-                //if (isFunction(destination[p]) && isFunction(source[p]) && baseClass) {
-                    //destination[p] = buildWrappedFunction(p, baseClass, source);
-                //} else {
-                    destination[p] = source[p];
-                //}
+                
+                destination[p] = source[p];
             }
         }
 
@@ -211,8 +207,6 @@ var jsExtender = jsExtender || (function () {
                             funcCount[propName] = 0;
 
                         funcCount[propName] += 1;
-
-                        console.log(propName, funcCount[propName]);
                     }
 
                     proto = getPrototypeOf(proto);
