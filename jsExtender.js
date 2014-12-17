@@ -36,8 +36,29 @@ var jsExtender = jsExtender || (function () {
         return typeof (obj) === 'object';
     }
 
+    function isString(str) {
+        return typeof (str) === 'string';
+    }
+
     function isFunction(obj) {
         return typeof (obj) === 'function';
+    }
+
+    function forEachProperty(source, propCallback) {
+        if (!isObject(source))
+            throw 'source must be an instance of an object.';
+
+        if (!isFunction(propCallback))
+            throw 'propCallback must be a function.';
+
+        var propNames = getOwnPropertyNames(source);
+
+        for (var i = 0; i < propNames.length; i++) {
+            var p = propNames[i];
+
+            if (!propCallback(p, source[p]))
+                break;
+        }
     }
 
     var jsExt = function (classExtension) {
@@ -56,17 +77,14 @@ var jsExtender = jsExtender || (function () {
         // Copys all properties from source to the destination if they don't already
         // exist in the destination. Otherwise, it creates a new function that wraps around
         // the source function and allows the inherited function to call the base function (destination).
-        function copyProperties(destination, source, baseClass) {
-            var propNames = getOwnPropertyNames(source);
+        function copyProperties(destination, source) {
+            forEachProperty(source, function(propName, propValue) {
+                if (propName === 'constructor')
+                    return true;
 
-            for (var i = 0; i < propNames.length; i++) {
-                var p = propNames[i];
-
-                if (p === 'constructor')
-                    continue;
-                
-                destination[p] = source[p];
-            }
+                destination[propName] = propValue;
+                return true;
+            });
         }
 
         /* 
@@ -151,7 +169,7 @@ var jsExtender = jsExtender || (function () {
         * This allows the destination to stay in scope for the next extend call.
         */
         function addExtend(destination, base, parent) {
-            copyProperties(destination.prototype, base, parent);
+            copyProperties(destination.prototype, base);
             destination.parent = parent;
             destination.prototype.parent = parent;
 
@@ -168,9 +186,13 @@ var jsExtender = jsExtender || (function () {
                 return extendProto;
             };
 
-            addCreate(destination);
-            addWrapFunction(destination);
-            addWrapAllFunctions(destination);
+            addExtenderFunctions(destination);
+        }
+
+        function addExtenderFunctions(destConstruct) {
+            addCreate(destConstruct);
+            addWrapFunction(destConstruct);
+            addWrapAllFunctions(destConstruct);
         }
 
         /*
@@ -190,51 +212,69 @@ var jsExtender = jsExtender || (function () {
 
             destConstruct.prototype.wrapAllFunctions = function () {
                 var proto = getPrototypeOf(this),
-                    propNames,
-                    propName,
-                    i,
-                    funcCount = {};
+                    funcCount = {},
+                    self = this;
 
                 while (proto && !isObjectConstructor(proto.constructor)) {
-                    propNames = getOwnPropertyNames(proto);
-
-                    for (i = 0; i < propNames.length; i++) {
-                        propName = propNames[i];
-                        if (propName === 'constructor' || !isFunction(proto[propName]))
-                            continue;
+                    forEachProperty(proto, function(propName, propValue) {
+                        if (propName === 'constructor' || !isFunction(propValue))
+                            return true;
 
                         if (!funcCount[propName])
                             funcCount[propName] = 0;
 
                         funcCount[propName] += 1;
-                    }
+                        return true;
+                    });
 
                     proto = getPrototypeOf(proto);
                 }
 
-                propNames = getOwnPropertyNames(funcCount);
-                for (i = 0; i < propNames.length; i++) {
-                    propName = propNames[i];
-                    if (funcCount[propName] <= 1)
-                        continue;
+                forEachProperty(funcCount, function (propName, propValue) {
+                    var rEx = /^wrapFunction(s){0,1}$/gi;
 
-                    this[propName] = buildWrappedFunction(propName, this);
-                }
+                    if (!isFunction(propValue))
+                        return true;
+
+                    if (rEx.test(propName))
+                        return true;
+
+                    if (funcCount[propName] <= 1)
+                        return true;
+
+                    self[propName] = buildWrappedFunction(propName, self);
+                    return true;
+                });
             };
         }
 
         function addWrapFunction(destConstruct) {
-            if (destConstruct.prototype.wrapFunction)
-                return;
-        
-            destConstruct.prototype.wrapFunction = function (funcName, proto, fn) {
+            var destProto = destConstruct.prototype;
+
+            destProto.wrapFunction = function (funcName, fn) {
+                if (!isString(funcName))
+                    throw 'funcName must be a string.';
+
+                if (!isFunction(fn))
+                    throw 'fn must be a function.';
+
                 // Add method to the class prototype
-                if (proto && fn && !hasOwnProperty.call(proto, funcName))
-                    proto[funcName] = fn;
+                if (destProto && fn && !hasOwnProperty.call(destProto, funcName))
+                    destProto[funcName] = fn;
 
                 var wrappedFunc = buildWrappedFunction(funcName, this);
                 this[funcName] = wrappedFunc;
                 return wrappedFunc;
+            };
+
+            destProto.wrapFunctions = function (fnObject) {
+                forEachProperty(fnObject, function(propName, propValue) {
+                    if (!isFunction(propValue))
+                        return true;
+
+                    destProto.wrapFunction(propName, propValue);
+                    return true;
+                });
             };
         }
         
@@ -303,6 +343,9 @@ var jsExtender = jsExtender || (function () {
     jsExt.isUndefinedOrNull = isUndefinedOrNull;
     jsExt.isObject = isObject;
     jsExt.isFunction = isFunction;
+    jsExt.forEachProperty = forEachProperty;
+    jsExt.getPrototypeOf = getPrototypeOf;
+    jsExt.isString = isString;
 
     return jsExt;
 })();
