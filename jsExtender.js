@@ -108,24 +108,24 @@ var jsExtender = jsExtender || (function () {
             };
         }
 
-        function findNextClassWithDefinition(funcName, baseClass) {
-            var found = null,
+        function findNextClassWithDefinition(propName, baseClass) {
+            var property = null,
                 currentClass = baseClass,
                 proto;
             
-            while (found === null && currentClass) {
+            while (property === null && currentClass) {
                 if (isFunction(currentClass)) {
                     proto = currentClass.prototype;
-                    if (hasOwnProperty.call(proto, funcName)) {
-                        found = proto[funcName];
+                    if (hasOwnProperty.call(proto, propName)) {
+                        property = proto[propName];
                     }
                 } else if (isObject(currentClass)) {
                     proto = getPrototypeOf(currentClass);
 
-                    if (hasOwnProperty.call(currentClass, funcName)) {
-                        found = currentClass[funcName];
-                    } else if (hasOwnProperty.call(proto, funcName)) {
-                        found = proto[funcName];
+                    if (hasOwnProperty.call(currentClass, propName)) {
+                        property = currentClass[propName];
+                    } else if (hasOwnProperty.call(proto, propName)) {
+                        property = proto[propName];
                     }
                 }
                 
@@ -133,7 +133,7 @@ var jsExtender = jsExtender || (function () {
             }
             
             return {
-                found: found,
+                found: property,
                 currentClass: currentClass
             };
         }
@@ -146,14 +146,16 @@ var jsExtender = jsExtender || (function () {
             if (sourceClass && hasOwnProperty.call(sourceClass, funcName) && isFunction(sourceClass[funcName]))
                 funcArray.push(sourceClass[funcName]);
 
-            var result = findNextClassWithDefinition(funcName, parentClass);
+            var result = findNextClassWithDefinition(funcName, parentClass),
+                func = result.found;
                 
-            while (result.found) {
-                if (isFunction(result.found)) {
-                    funcArray.unshift(result.found);
+            while (func) {
+                if (isFunction(func)) {
+                    funcArray.unshift(func);
                 }
                 
                 result = findNextClassWithDefinition(funcName, result.currentClass);
+                func = result.found;
             }
 
             for (var i = 0; i < funcArray.length; i++) {
@@ -191,7 +193,7 @@ var jsExtender = jsExtender || (function () {
 
         function addExtenderFunctions(destConstruct) {
             addCreate(destConstruct);
-            addWrapFunction(destConstruct);
+            addAppendFunctions(destConstruct);
             addWrapAllFunctions(destConstruct);
         }
 
@@ -230,11 +232,8 @@ var jsExtender = jsExtender || (function () {
                     proto = getPrototypeOf(proto);
                 }
 
-                forEachProperty(funcCount, function (propName, propValue) {
-                    var rEx = /^wrapFunction(s){0,1}$/gi;
-
-                    if (!isFunction(propValue))
-                        return true;
+                forEachProperty(funcCount, function (propName) {
+                    var rEx = /^appendFunction(s){0,1}$/gi;
 
                     if (rEx.test(propName))
                         return true;
@@ -242,16 +241,16 @@ var jsExtender = jsExtender || (function () {
                     if (funcCount[propName] <= 1)
                         return true;
 
-                    self[propName] = buildWrappedFunction(propName, self);
+                    self[propName] = buildWrappedFunction(propName, getPrototypeOf(self));
                     return true;
                 });
             };
         }
 
-        function addWrapFunction(destConstruct) {
+        function addAppendFunctions(destConstruct) {
             var destProto = destConstruct.prototype;
 
-            destProto.wrapFunction = function (funcName, fn) {
+            destProto.appendFunction = function (funcName, fn) {
                 if (!isString(funcName))
                     throw 'funcName must be a string.';
 
@@ -261,18 +260,14 @@ var jsExtender = jsExtender || (function () {
                 // Add method to the class prototype
                 if (destProto && fn && !hasOwnProperty.call(destProto, funcName))
                     destProto[funcName] = fn;
-
-                var wrappedFunc = buildWrappedFunction(funcName, this);
-                this[funcName] = wrappedFunc;
-                return wrappedFunc;
             };
 
-            destProto.wrapFunctions = function (fnObject) {
+            destProto.appendFunctions = function (fnObject) {
                 forEachProperty(fnObject, function(propName, propValue) {
                     if (!isFunction(propValue))
                         return true;
-
-                    destProto.wrapFunction(propName, propValue);
+                    
+                    destProto.appendFunction(propName, propValue);
                     return true;
                 });
             };
