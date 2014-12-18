@@ -100,7 +100,7 @@ var defaultClass = jsExtender({
             console.log('Testing the test function!');
         };
 
-        defaultClass.appendFunction('testFunc', testFunc);
+        defaultClass.prototype.appendFunction('testFunc', testFunc);
     }
 });
 
@@ -135,7 +135,7 @@ function ExtensionConstructor() {
         this.base.call(this);
     }
 
-    extensionFunctionClass.appendFunction('testFunc', testFunc);
+    extensionFunctionClass.prototype.appendFunction('testFunc', testFunc);
 }
 
 // This prototyped function will be available after the inheritance occurs.
@@ -171,7 +171,6 @@ extensionFunctionInstance.testFunc();
 var baseTestClass = extensionFunctionClass.extend({
     constructor: function() {
         console.log('Constructor from baseTestClass has been called.');
-        this.base.call(this);
     },
     testFunc: function() {
         console.log('The test function has been called from the baseTestClass.');
@@ -201,7 +200,6 @@ baseTestInstance.afterDeclare();
 var baseTestClass2 = baseTestClass.extend({
     constructor: function() {
         console.log('Constructor from baseTestClass2 has been called.');
-        this.base.call(this);
     },
     testFunc: function() {
         console.log('The test function has been called from the baseTestClass2.');
