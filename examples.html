@@ -44,10 +44,6 @@
                 test2.prototype.func = function() {
                     console.log('testing func base2.' + this.test4);
                 };
-
-                /*this.wrapFunction('func', test2.prototype, function () {
-                    console.log('testing func base2.' + this.test4);
-                });*/
             }
 
             test2Base.prototype.func1 = function () {
@@ -64,11 +60,6 @@
                     console.log('testing func base3.' + this.test4);
                     this.base();
                 };
-
-                /*this.wrapFunction('func', test3.prototype, function () {
-                    console.log('testing func base3.' + this.test4);
-                    this.base();
-                });*/
             }
 
             test3Base.prototype.func1 = function () {
@@ -97,11 +88,6 @@
                         console.log('func1 from test4 constructor.' + privateVar);
                         this.base();
                     };
-
-                    /*this.wrapFunction('func1', test4.prototype, function () {
-                        console.log('func1 from test4 constructor.' + privateVar);
-                        this.base();
-                    });*/
                 },
                 func: function() {
                     console.log('func from test4.' + this.test4);
