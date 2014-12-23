@@ -10,7 +10,7 @@
  * Created: 07/18/2014
  * Project Url: https://github.com/dredmond/jsExtender
  *
- * Last Modified: 12/16/2014
+ * Last Modified: 12/23/2014
  *
  */
 var jsExtender = jsExtender || (function () {
@@ -238,8 +238,8 @@ var jsExtender = jsExtender || (function () {
                     if (rEx.test(propName))
                         return true;
 
-                    if (funcCount[propName] <= 1)
-                        return true;
+                    //if (funcCount[propName] <= 1)
+                    //    return true;
 
                     self[propName] = buildWrappedFunction(propName, getPrototypeOf(self));
                     return true;
