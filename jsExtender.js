@@ -20,6 +20,20 @@ var jsExtender = jsExtender || (function () {
         keys = Object.keys,
         objectConstructor = Object.prototype.constructor;
 
+    if (typeof (getOwnPropertyNames) === 'undefined' || getOwnPropertyNames === null) {
+        getOwnPropertyNames = function(obj) {
+            var arr = [];
+
+            for (var k in obj) {
+                if (hasOwnProperty.call(obj, k)) {
+                    arr.push(k);
+                }
+            }
+
+            return arr;
+        };
+    }
+
     function isObjectConstructor(func) {
         return objectConstructor === func;
     }
